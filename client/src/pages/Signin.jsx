@@ -1,3 +1,4 @@
+import OAuth from "@/components/OAuth";
 import {
   signInFailure,
   signInStart,
@@ -39,7 +40,7 @@ const Signin = () => {
   };
 
   return (
-    <div className="">
+    <div className="mt-20">
       <div className="flex p-3 max-w-3xl mx-auto flex-col md:flex-row md:items-center gap-5">
         {/* left side div */}
         <div className="flex-1">
@@ -88,6 +89,7 @@ const Signin = () => {
                 "Sign In"
               )}
             </Button>
+            <OAuth />
           </form>
           <div className="flex gap-2 text-sm mt-5">
             <span>Don't have an account?</span>{" "}

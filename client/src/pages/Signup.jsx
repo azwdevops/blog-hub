@@ -1,3 +1,4 @@
+import OAuth from "@/components/OAuth";
 import API from "@/utils/API";
 import { Alert, Button, Label, Spinner, TextInput } from "flowbite-react";
 import { useState } from "react";
@@ -37,7 +38,7 @@ const Signup = () => {
   };
 
   return (
-    <div className="">
+    <div className="mt-20">
       <div className="flex p-3 max-w-3xl mx-auto flex-col md:flex-row md:items-center gap-5">
         {/* left side div */}
         <div className="flex-1">
@@ -103,6 +104,7 @@ const Signup = () => {
                 "Sign Up"
               )}
             </Button>
+            <OAuth />
           </form>
           <div className="flex gap-2 text-sm mt-5">
             <span>Have an account?</span>{" "}

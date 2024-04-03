@@ -53,3 +53,93 @@ module.exports.signin = async (req, res, next) => {
     return next(error);
   }
 };
+
+module.exports.googleAuth = async (req, res, next) => {
+  try {
+    const { email, name, googlePhotoUrl } = req.body;
+    const user = await User.findOne({ email });
+    if (user) {
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+      const { password, ...otherUserFields } = user._doc;
+      return res
+        .status(200)
+        .cookie("access_token", token, { httpOnly: true })
+        .json(otherUserFields);
+    } else {
+      const generatedPassword = Math.random().toString(36).slice(-8);
+      const hashedPassword = await bcrypt.hash(generatedPassword, 10);
+      const newUser = new User({
+        email,
+        username:
+          name.toLowerCase().split(" ").join("") +
+          Math.random().toString(9).slice(-4),
+        password: hashedPassword,
+        profilePicture: googlePhotoUrl,
+      });
+      await newUser.save();
+      const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET);
+      const { password, ...otherUserFields } = newUser._doc;
+      return res
+        .status(200)
+        .cookie("access_token", token, { httpOnly: true })
+        .json(otherUserFields);
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports.updateUser = async (req, res, next) => {
+  try {
+    if (req.user.id !== req.params.userId) {
+      return next(errorHandler(403, "Permission to update user denied"));
+    }
+    // username related tests
+    if (req.body.password) {
+      if (req.body.password.length < 6) {
+        return next(
+          errorHandler(400, "Password must be at least 6 characters")
+        );
+      }
+      req.body.password = await bcrypt.hash(req.body.password, 10);
+    }
+    // username related tests
+    if (req.body.username) {
+      if (req.body.username.length < 7 || req.body.username.length > 20) {
+        return next(
+          errorHandler(400, "Username must be between 7 and 20 characters")
+        );
+      }
+      if (req.body.username.includes(" ")) {
+        return next(errorHandler(400, "Username cannot contain spaces"));
+      }
+      if (req.body.username !== req.body.username.toLowerCase()) {
+        return next(errorHandler(400, "Username must be all lowercase"));
+      }
+      if (!req.body.username.match(/^[a-zA-Z0-9]+$/)) {
+        return next(
+          errorHandler(400, "Username can only contain letters and numbers")
+        );
+      }
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.userId,
+      {
+        $set: {
+          username: req.body.username,
+          email: req.body.email,
+          profilePicture: req.body.profilePicture,
+          password: req.body.password,
+        },
+      },
+      { new: true } // to ensure we get back the updated user
+    );
+    const { password, ...otherUserFields } = updatedUser._doc;
+
+    return res.status(200).json(otherUserFields);
+  } catch (error) {
+    console.log(error);
+    return next(error);
+  }
+};
