@@ -1,9 +1,9 @@
 import OAuth from "@/components/OAuth";
+import { signInSuccess } from "@/redux/features/authSlice";
 import {
-  signInFailure,
-  signInStart,
-  signInSuccess,
-} from "@/redux/features/authSlice";
+  processingFailure,
+  processingStart,
+} from "@/redux/features/sharedSlice";
 import API from "@/utils/API";
 import { Alert, Button, Label, Spinner, TextInput } from "flowbite-react";
 import { useState } from "react";
@@ -15,8 +15,8 @@ const Signin = () => {
   const dispatch = useDispatch();
   const [formData, setFormData] = useState({});
 
-  const error = useSelector((state) => state.auth.error);
-  const loading = useSelector((state) => state.auth.loading);
+  const error = useSelector((state) => state.shared.error);
+  const loading = useSelector((state) => state.shared.loading);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value.trim() });
@@ -24,10 +24,10 @@ const Signin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    dispatch(signInStart());
+    dispatch(processingStart());
 
     if (!formData.email || !formData.password) {
-      dispatch(signInFailure("please fill out all fields"));
+      dispatch(processingFailure("please fill out all fields"));
     }
     await API.post(`/users/signin/`, formData)
       .then((res) => {
@@ -35,7 +35,7 @@ const Signin = () => {
         navigate("/");
       })
       .catch((err) => {
-        dispatch(signInFailure(err.response.data.message));
+        dispatch(processingFailure(err.response.data.message));
       });
   };
 

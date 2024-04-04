@@ -1,5 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const fs = require("fs");
+const path = require("path");
 
 const User = require("#models/userModel.js");
 const { errorHandler } = require("#utils/error.js");
@@ -40,7 +42,10 @@ module.exports.signin = async (req, res, next) => {
     if (!validPassword) {
       return next(errorHandler(400, "Invalid login credentials"));
     }
-    const token = jwt.sign({ id: existingUser._id }, process.env.JWT_SECRET);
+    const token = jwt.sign(
+      { id: existingUser._id, isAdmin: existingUser.isAdmin },
+      process.env.JWT_SECRET
+    );
 
     // separate the password from the other fields to avoid sending it back in the json response
     const { password: dbPassword, ...otherUserFields } = existingUser._doc;
@@ -59,7 +64,10 @@ module.exports.googleAuth = async (req, res, next) => {
     const { email, name, googlePhotoUrl } = req.body;
     const user = await User.findOne({ email });
     if (user) {
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+      const token = jwt.sign(
+        { id: user._id, isAdmin: user.isAdmin },
+        process.env.JWT_SECRET
+      );
       const { password, ...otherUserFields } = user._doc;
       return res
         .status(200)
@@ -77,7 +85,10 @@ module.exports.googleAuth = async (req, res, next) => {
         profilePicture: googlePhotoUrl,
       });
       await newUser.save();
-      const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET);
+      const token = jwt.sign(
+        { id: newUser._id, isAdmin: newUser.isAdmin },
+        process.env.JWT_SECRET
+      );
       const { password, ...otherUserFields } = newUser._doc;
       return res
         .status(200)
@@ -91,10 +102,11 @@ module.exports.googleAuth = async (req, res, next) => {
 
 module.exports.updateUser = async (req, res, next) => {
   try {
+    const user = await User.findById(req.params.userId);
     if (req.user.id !== req.params.userId) {
       return next(errorHandler(403, "Permission to update user denied"));
     }
-    // username related tests
+    // username related validations
     if (req.body.password) {
       if (req.body.password.length < 6) {
         return next(
@@ -103,11 +115,11 @@ module.exports.updateUser = async (req, res, next) => {
       }
       req.body.password = await bcrypt.hash(req.body.password, 10);
     }
-    // username related tests
+    // username related validations
     if (req.body.username) {
-      if (req.body.username.length < 7 || req.body.username.length > 20) {
+      if (req.body.username.length < 5 || req.body.username.length > 20) {
         return next(
-          errorHandler(400, "Username must be between 7 and 20 characters")
+          errorHandler(400, "Username must be between 5 and 20 characters")
         );
       }
       if (req.body.username.includes(" ")) {
@@ -123,14 +135,27 @@ module.exports.updateUser = async (req, res, next) => {
       }
     }
 
+    const fieldsToUpdate = {
+      username: req.body.username,
+      email: req.body.email,
+      password: req.body.password,
+    };
+
+    // we remove the previous image if the image changed, and add the new image to fieldsToUpdate
+    if (req.file) {
+      fs.unlink(path.join(__dirname, "../", user.profilePicture), (err) => {
+        if (err) {
+          return next(err);
+        }
+      });
+      fieldsToUpdate.profilePicture = req.file.path;
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
       req.params.userId,
       {
         $set: {
-          username: req.body.username,
-          email: req.body.email,
-          profilePicture: req.body.profilePicture,
-          password: req.body.password,
+          ...fieldsToUpdate,
         },
       },
       { new: true } // to ensure we get back the updated user
@@ -140,6 +165,29 @@ module.exports.updateUser = async (req, res, next) => {
     return res.status(200).json(otherUserFields);
   } catch (error) {
     console.log(error);
+    return next(error);
+  }
+};
+
+module.exports.deleteUser = async (req, res, next) => {
+  if (req.user.id !== req.params.userId) {
+    return next(errorHandler(403, "Permission to delete account denied"));
+  }
+  try {
+    await User.findByIdAndDelete(req.params.userId);
+    return res.status(200).json({ message: "Account deleted successfully" });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+module.exports.signout = async (req, res, next) => {
+  try {
+    return res
+      .clearCookie("access_cookie")
+      .status(200)
+      .json("User has been signed out");
+  } catch (error) {
     return next(error);
   }
 };

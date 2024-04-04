@@ -4,6 +4,8 @@ import { AiOutlineSearch } from "react-icons/ai";
 import { FaMoon, FaSun } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleTheme } from "@/redux/features/themeSlice";
+import API from "@/utils/API";
+import { signoutSuccess } from "@/redux/features/authSlice";
 
 const Header = () => {
   const path = useLocation().pathname;
@@ -12,6 +14,16 @@ const Header = () => {
 
   const user = useSelector((state) => state.auth.user);
   const theme = useSelector((state) => state.theme.theme);
+
+  const handleSignout = async () => {
+    await API.post("/users/signout")
+      .then((res) => {
+        dispatch(signoutSuccess());
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
 
   return (
     <Navbar className="border-b-2">
@@ -48,7 +60,15 @@ const Header = () => {
           <Dropdown
             arrowIcon={false}
             inline
-            label={<Avatar alt="user" img={user?.profilePicture} rounded />}
+            label={
+              <Avatar
+                alt="user"
+                img={`${import.meta.env.VITE_APP_SERVER_BASE_URL}/${
+                  user?.profilePicture
+                }`}
+                rounded
+              />
+            }
           >
             <Dropdown.Header>
               <span className="block text-sm">@{user?.username}</span>
@@ -60,7 +80,7 @@ const Header = () => {
               <Dropdown.Item>Profile</Dropdown.Item>
             </Link>
             <Dropdown.Divider />
-            <Dropdown.Item>Sign Out</Dropdown.Item>
+            <Dropdown.Item onClick={handleSignout}>Sign Out</Dropdown.Item>
           </Dropdown>
         ) : (
           <Link to="/signin">

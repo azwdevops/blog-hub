@@ -5,9 +5,11 @@ const cookieParser = require("cookie-parser");
 
 require("dotenv").config();
 const authRoutes = require("#routes/authRoutes.js");
+const postRoutes = require("#routes/postRoutes.js");
 
 const app = express();
 app.use(express.json());
+app.use("/uploads", express.static(__dirname + "/uploads"));
 
 const corsConfig = {
   origin: true,
@@ -19,6 +21,7 @@ app.use(cookieParser());
 
 // routes
 app.use("/api/users", authRoutes);
+app.use("/api/posts", postRoutes);
 
 // note this comes at the end to ensure it works
 app.use((err, req, res, next) => {

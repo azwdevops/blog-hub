@@ -2,12 +2,17 @@ import { combineReducers, configureStore } from "@reduxjs/toolkit";
 
 import authReducer from "@/redux/features/authSlice";
 import themeReducer from "@/redux/features/themeSlice";
+import sharedReducer from "@/redux/features/sharedSlice";
+import postReducer from "@/redux/features/postSlice";
+
 import { persistReducer, persistStore } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 
 const rootReducer = combineReducers({
   auth: authReducer,
   theme: themeReducer,
+  shared: sharedReducer,
+  posts: postReducer,
 });
 
 const persistConfig = {

@@ -4,12 +4,12 @@ import { GoogleAuthProvider, signInWithPopup, getAuth } from "firebase/auth";
 import { app } from "@/firebase";
 import API from "@/utils/API";
 import { useDispatch } from "react-redux";
-import {
-  signInFailure,
-  signInStart,
-  signInSuccess,
-} from "@/redux/features/authSlice";
+import { signInSuccess } from "@/redux/features/authSlice";
 import { useNavigate } from "react-router-dom";
+import {
+  processingFailure,
+  processingStart,
+} from "@/redux/features/sharedSlice";
 
 const OAuth = () => {
   const dispatch = useDispatch();
@@ -19,7 +19,7 @@ const OAuth = () => {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
     try {
-      dispatch(signInStart());
+      dispatch(processingStart());
       const resultsFromGoogle = await signInWithPopup(auth, provider);
       await API.post(`/users/google`, {
         name: resultsFromGoogle.user.displayName,
@@ -31,7 +31,7 @@ const OAuth = () => {
           navigate("/");
         })
         .catch((err) => {
-          dispatch(signInFailure(err.response.data.message));
+          dispatch(processingFailure(err.response.data.message));
         });
     } catch (error) {
       console.log(error);

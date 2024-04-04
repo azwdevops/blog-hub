@@ -1,14 +1,20 @@
 import OAuth from "@/components/OAuth";
+import {
+  processingFailure,
+  processingStart,
+} from "@/redux/features/sharedSlice";
 import API from "@/utils/API";
 import { Alert, Button, Label, Spinner, TextInput } from "flowbite-react";
 import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 
 const Signup = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [formData, setFormData] = useState({});
-  const [errorMessage, setErrorMessage] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const error = useSelector((state) => state.shared.error);
+  const loading = useSelector((state) => state.shared.loading);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value.trim() });
@@ -16,15 +22,15 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMessage(null);
-    setLoading(true);
+    dispatch(processingStart());
+
     if (
       !formData.username ||
       !formData.email ||
       !formData.password ||
       !formData.confirmPassword
     ) {
-      return setErrorMessage("please fill out all fields");
+      return dispatch(processingFailure("please fill out all fields"));
     }
     await API.post(`/users/signup/`, formData)
       .then((res) => {
@@ -32,9 +38,8 @@ const Signup = () => {
         navigate("/signin");
       })
       .catch((err) => {
-        setErrorMessage(err.response.data.message);
-      })
-      .finally(() => setLoading(false));
+        dispatch(processingFailure(err.response.data.message));
+      });
   };
 
   return (
@@ -112,9 +117,9 @@ const Signup = () => {
               Sign In
             </Link>
           </div>
-          {errorMessage && (
+          {error && (
             <Alert className="mt-5" color="failure">
-              {errorMessage}
+              {error}
             </Alert>
           )}
         </div>
