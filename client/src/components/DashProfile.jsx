@@ -1,19 +1,21 @@
-import { Alert, Button, Modal, Spinner, TextInput } from "flowbite-react";
+import { Alert, Button, Spinner, TextInput } from "flowbite-react";
 import { useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import API from "@/utils/API";
 import {
   deleteUserSuccess,
-  signoutSuccess,
+  clearAuthState,
   updateUserSuccess,
 } from "@/redux/features/authSlice";
-import { HiOutlineExclamationCircle } from "react-icons/hi";
 import { Link } from "react-router-dom";
 import {
+  clearSharedState,
   processingFailure,
   processingStart,
 } from "@/redux/features/sharedSlice";
+import DeleteModal from "./DeleteModal";
+import { clearReduxPersistedState } from "@/utils/scripts";
 
 const DashProfile = () => {
   const dispatch = useDispatch();
@@ -88,7 +90,9 @@ const DashProfile = () => {
   const handleSignout = async () => {
     await API.post("/users/signout")
       .then((res) => {
-        dispatch(signoutSuccess());
+        dispatch(clearAuthState());
+        dispatch(clearSharedState());
+        clearReduxPersistedState();
       })
       .catch((err) => {
         console.log(err);
@@ -200,30 +204,12 @@ const DashProfile = () => {
         </Alert>
       )}
       {showModal && (
-        <Modal
-          show={showModal}
-          onClose={() => setShowModal(false)}
-          popup
-          size="md"
-        >
-          <Modal.Header />
-          <Modal.Body>
-            <div className="text-center">
-              <HiOutlineExclamationCircle className="h-14 w-14 text-gray-400 dark:text-gray-200 mb-4 mx-auto" />
-              <h3 className="mb-5 text-lg text-gray-500 dark:text-gray-400">
-                Are you sure you want to delete your account
-              </h3>
-              <div className="flex justify-center gap-4">
-                <Button color="failure" onClick={handleDelete}>
-                  Yes, I'm Sure
-                </Button>
-                <Button color="gray" onClick={() => setShowModal(false)}>
-                  No, Cancel
-                </Button>
-              </div>
-            </div>
-          </Modal.Body>
-        </Modal>
+        <DeleteModal
+          showModal={showModal}
+          setShowModal={setShowModal}
+          handleDelete={handleDelete}
+          deleteText={"your account"}
+        />
       )}
     </div>
   );

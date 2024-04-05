@@ -5,7 +5,9 @@ import { FaMoon, FaSun } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleTheme } from "@/redux/features/themeSlice";
 import API from "@/utils/API";
-import { signoutSuccess } from "@/redux/features/authSlice";
+import { clearAuthState } from "@/redux/features/authSlice";
+import { clearSharedState } from "@/redux/features/sharedSlice";
+import { clearReduxPersistedState } from "@/utils/scripts";
 
 const Header = () => {
   const path = useLocation().pathname;
@@ -18,7 +20,9 @@ const Header = () => {
   const handleSignout = async () => {
     await API.post("/users/signout")
       .then((res) => {
-        dispatch(signoutSuccess());
+        dispatch(clearAuthState());
+        dispatch(clearSharedState());
+        clearReduxPersistedState();
       })
       .catch((err) => {
         console.log(err);

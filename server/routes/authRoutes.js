@@ -7,6 +7,7 @@ const {
   updateUser,
   deleteUser,
   signout,
+  getUsers,
 } = require("#controllers/authController.js");
 const { verifyUser, upload } = require("#utils/middleware.js");
 
@@ -23,5 +24,6 @@ router.patch(
 );
 router.delete("/delete/:userId", verifyUser, deleteUser);
 router.post("/signout", signout);
+router.get("/get-users", verifyUser, getUsers);
 
 module.exports = router;

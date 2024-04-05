@@ -1,8 +1,15 @@
-import { signoutSuccess } from "@/redux/features/authSlice";
+import { clearAuthState } from "@/redux/features/authSlice";
+import { clearSharedState } from "@/redux/features/sharedSlice";
 import API from "@/utils/API";
+import { clearReduxPersistedState } from "@/utils/scripts";
 import { Sidebar } from "flowbite-react";
 import { useEffect, useState } from "react";
-import { HiArrowSmRight, HiDocumentText, HiUser } from "react-icons/hi";
+import {
+  HiArrowSmRight,
+  HiDocumentText,
+  HiOutlineUserGroup,
+  HiUser,
+} from "react-icons/hi";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation } from "react-router-dom";
 
@@ -24,7 +31,9 @@ const DashSidebar = () => {
   const handleSignout = async () => {
     await API.post("/users/signout")
       .then((res) => {
-        dispatch(signoutSuccess());
+        dispatch(clearAuthState());
+        dispatch(clearSharedState());
+        clearReduxPersistedState();
       })
       .catch((err) => {
         console.log(err);
@@ -41,15 +50,26 @@ const DashSidebar = () => {
             </Sidebar.Item>
           </Link>
           {user.isAdmin && (
-            <Link to="/dashboard?tab=posts">
-              <Sidebar.Item
-                active={tab === "posts"}
-                icon={HiDocumentText}
-                as="div"
-              >
-                Posts
-              </Sidebar.Item>
-            </Link>
+            <>
+              <Link to="/dashboard?tab=posts">
+                <Sidebar.Item
+                  active={tab === "posts"}
+                  icon={HiDocumentText}
+                  as="div"
+                >
+                  Posts
+                </Sidebar.Item>
+              </Link>
+              <Link to="/dashboard?tab=users">
+                <Sidebar.Item
+                  active={tab === "users"}
+                  icon={HiOutlineUserGroup}
+                  as="div"
+                >
+                  Users
+                </Sidebar.Item>
+              </Link>
+            </>
           )}
           <Sidebar.Item
             icon={HiArrowSmRight}

@@ -17,7 +17,7 @@ const authSlice = createSlice({
     deleteUserSuccess: (state) => {
       state.user = null;
     },
-    signoutSuccess: (state) => {
+    clearAuthState: (state) => {
       state.user = null;
     },
   },
@@ -29,5 +29,5 @@ export const {
   signInSuccess,
   updateUserSuccess,
   deleteUserSuccess,
-  signoutSuccess,
+  clearAuthState,
 } = authSlice.actions;

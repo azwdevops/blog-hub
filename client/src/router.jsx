@@ -9,6 +9,8 @@ import About from "@/pages/About";
 import PrivateRoute from "./components/PrivateRoute";
 import OnlyAdminPrivateRoute from "./components/OnlyAdminPrivateRoute";
 import CreatePost from "./pages/CreatePost";
+import UpdatePost from "./pages/UpdatePost";
+import PostDetail from "./pages/PostDetail";
 
 const router = createBrowserRouter([
   {
@@ -20,13 +22,17 @@ const router = createBrowserRouter([
       { path: "/signin", element: <Signin /> },
       { path: "/about", element: <About /> },
       { path: "/projects", element: <Projects /> },
+      { path: "/posts/:postSlug", element: <PostDetail /> },
       {
         element: <PrivateRoute />,
         children: [{ path: "/dashboard", element: <Dashboard /> }],
       },
       {
         element: <OnlyAdminPrivateRoute />,
-        children: [{ path: "/create-post", element: <CreatePost /> }],
+        children: [
+          { path: "/create-post", element: <CreatePost /> },
+          { path: "/update-post/:postId", element: <UpdatePost /> },
+        ],
       },
     ],
   },

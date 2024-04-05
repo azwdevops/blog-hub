@@ -170,7 +170,7 @@ module.exports.updateUser = async (req, res, next) => {
 };
 
 module.exports.deleteUser = async (req, res, next) => {
-  if (req.user.id !== req.params.userId) {
+  if (!req.user.isAdmin && req.user.id !== req.params.userId) {
     return next(errorHandler(403, "Permission to delete account denied"));
   }
   try {
@@ -187,6 +187,40 @@ module.exports.signout = async (req, res, next) => {
       .clearCookie("access_cookie")
       .status(200)
       .json("User has been signed out");
+  } catch (error) {
+    return next(error);
+  }
+};
+
+module.exports.getUsers = async (req, res, next) => {
+  try {
+    if (!req.user.isAdmin) {
+      return next(errorHandler(403, "Permission to view users denied"));
+    }
+    const startIndex = parseInt(req.query.startIndex) || 0;
+    const limit = parseInt(req.query.limit) || 10;
+    const sortDirection = req.query.sort === "asc" ? 1 : -1;
+    const users = await User.find()
+      .sort({ createdAt: sortDirection })
+      .skip(startIndex)
+      .limit(limit);
+    const usersWithoutPassword = users.map((user) => {
+      const { password, ...otherUserFields } = user._doc;
+      return otherUserFields;
+    });
+    const totalUsers = await User.countDocuments();
+    const now = new Date();
+    const oneMonthAgo = new Date(
+      now.getFullYear(),
+      now.getMonth() - 1,
+      now.getDate()
+    );
+    const lastMonthsUsers = await User.countDocuments({
+      createdAt: { $gte: oneMonthAgo },
+    });
+    return res
+      .status(200)
+      .json({ users: usersWithoutPassword, totalUsers, lastMonthsUsers });
   } catch (error) {
     return next(error);
   }

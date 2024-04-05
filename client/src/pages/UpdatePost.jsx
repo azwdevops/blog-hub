@@ -5,17 +5,33 @@ import {
 } from "@/redux/features/sharedSlice";
 import API from "@/utils/API";
 import { Alert, Button, FileInput, Select, TextInput } from "flowbite-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
-const CreatePost = () => {
+const UpdatePost = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const { postId } = useParams();
   const [postData, setPostData] = useState({});
   const error = useSelector((state) => state?.shared?.error);
+  const user = useSelector((state) => state?.auth?.user);
+
+  useEffect(() => {
+    if (user.isAdmin) {
+      const fetchPost = async () => {
+        await API.get(`/posts/get-posts?postId=${postId}`)
+          .then((res) => {
+            setPostData(res.data.posts[0]);
+          })
+          .catch((err) => {});
+      };
+      fetchPost();
+    }
+  }, [postId, user?.isAdmin]);
 
   const handleChange = (e) => {
     setPostData({ ...postData, [e.target.name]: e.target.value });
@@ -39,11 +55,11 @@ const CreatePost = () => {
     formData.append("image", postData.image);
     formData.append("content", postData.content);
 
-    await API.post(`/posts/create-post`, formData)
+    await API.post(`/posts/update-post/${user._id}/${postId}`, formData)
       .then((res) => {
         dispatch(processingSuccess());
-        window.alert("Post created successfully");
-        navigate(`/posts/${res.data.slug}`);
+        window.alert("Post updated successfully");
+        // navigate(`/posts/${res.data.slug}`);
       })
       .catch((err) => {
         dispatch(processingFailure(err.response.data.message));
@@ -52,7 +68,7 @@ const CreatePost = () => {
 
   return (
     <div className="p-3 max-w-3xl mx-auto min-h-screen">
-      <h1 className="text-center text-3xl my-7 font-semibold">Create a post</h1>
+      <h1 className="text-center text-3xl my-7 font-semibold">Update post</h1>
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         <div className="flex flex-col gap-4 sm:flex-row justify-between">
           <TextInput
@@ -83,9 +99,21 @@ const CreatePost = () => {
             accept="image/*"
             name="image"
             onChange={handleImageChange}
-            required
           />
         </div>
+        {postData.image && (
+          // if we have postData.image from database it will be in form of a string not a binary file, thus we use the condition below to be able to display
+          // image if it's string or if it's binary file
+          <img
+            src={
+              (typeof postData.image !== "string" &&
+                URL.createObjectURL(postData?.image)) ||
+              `${import.meta.env.VITE_APP_SERVER_BASE_URL}/${postData.image}`
+            }
+            className="w-full h-72 object-cover"
+            alt=""
+          />
+        )}
         <ReactQuill
           theme="snow"
           placeholder="Write something"
@@ -94,7 +122,7 @@ const CreatePost = () => {
           value={postData?.content}
         />
         <Button type="submit" gradientDuoTone="purpleToPink">
-          Publish
+          Update Post
         </Button>
       </form>
       {error && (
@@ -106,4 +134,4 @@ const CreatePost = () => {
   );
 };
 
-export default CreatePost;
+export default UpdatePost;

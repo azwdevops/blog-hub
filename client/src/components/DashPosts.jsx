@@ -3,16 +3,23 @@ import { Table } from "flowbite-react";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+import DeleteModal from "./DeleteModal";
 
 const DashPosts = () => {
   const user = useSelector((state) => state.auth.user);
   const [userPosts, setUserPosts] = useState([]);
+  const [showMore, setShowMore] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [currentPostId, setCurrentPostId] = useState(null);
 
   useEffect(() => {
     const fetchPosts = async () => {
       await API.get(`/posts/get-posts?userId=${user._id}`)
         .then((res) => {
           setUserPosts(res.data.posts);
+          if (res.data.posts.length < 10) {
+            setShowMore(false);
+          }
         })
         .catch((err) => {});
     };
@@ -20,6 +27,32 @@ const DashPosts = () => {
       fetchPosts();
     }
   }, [user._id, user.isAdmin]);
+
+  const handleShowMore = async () => {
+    const startIndex = userPosts.length;
+    await API.get(
+      `/posts/get-posts?userId=${user._id}&startIndex=${startIndex}`
+    )
+      .then((res) => {
+        setUserPosts((prev) => [...prev, ...res.data.posts]);
+        if (res.data.posts.length < 10) {
+          setShowMore(false);
+        }
+      })
+      .catch((err) => {});
+  };
+
+  const handleDeletePost = async () => {
+    setShowModal(false);
+    await API.delete(`/posts/delete-post/${user._id}/${currentPostId}`)
+      .then((res) => {
+        setUserPosts((prev) =>
+          prev.filter((item) => item._id !== currentPostId)
+        );
+        setCurrentPostId(null);
+      })
+      .catch((err) => {});
+  };
 
   return (
     <div className="table-auto overflow-x-scroll md:mx-auto p-3 scrollbar scrollbar-track-slate-100 scrollbar-thumb-slate-300 dark:scrollbar-track-slate-700 dark:scrollbar-thumb-slate-500">
@@ -47,7 +80,7 @@ const DashPosts = () => {
                   </Table.Cell>
                   <Table.Cell>
                     <Link
-                      to={`/post/${post.slug}`}
+                      to={`/posts/${post.slug}`}
                       className="font-medium text-gray-900 dark:text-white"
                     >
                       <img
@@ -60,11 +93,17 @@ const DashPosts = () => {
                     </Link>
                   </Table.Cell>
                   <Table.Cell>
-                    <Link to={`/post/${post.slug}`}>{post.title}</Link>
+                    <Link to={`/posts/${post.slug}`}>{post.title}</Link>
                   </Table.Cell>
                   <Table.Cell>{post.category}</Table.Cell>
                   <Table.Cell>
-                    <span className="font-medium text-red-500 hover:underline cursor-pointer">
+                    <span
+                      className="font-medium text-red-500 hover:underline cursor-pointer"
+                      onClick={() => {
+                        setShowModal(true);
+                        setCurrentPostId(post._id);
+                      }}
+                    >
                       Delete
                     </span>
                   </Table.Cell>
@@ -80,9 +119,25 @@ const DashPosts = () => {
               ))}
             </Table.Body>
           </Table>
+          {showMore && (
+            <button
+              onClick={handleShowMore}
+              className="w-full text-teal-500 self-center text-sm py-7"
+            >
+              Show More
+            </button>
+          )}
         </>
       ) : (
         <p>You have no posts yet</p>
+      )}
+      {showModal && (
+        <DeleteModal
+          showModal={showModal}
+          setShowModal={setShowModal}
+          handleDelete={handleDeletePost}
+          deleteText={"this post"}
+        />
       )}
     </div>
   );

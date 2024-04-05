@@ -21,9 +21,17 @@ const sharedSlice = createSlice({
       state.loading = false;
       state.error = null;
     },
+    clearSharedState: (state) => {
+      state.loading = false;
+      state.error = null;
+    },
   },
 });
 
 export default sharedSlice.reducer;
-export const { processingStart, processingFailure, processingSuccess } =
-  sharedSlice.actions;
+export const {
+  processingStart,
+  processingFailure,
+  processingSuccess,
+  clearSharedState,
+} = sharedSlice.actions;

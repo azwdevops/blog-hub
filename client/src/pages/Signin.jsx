@@ -3,6 +3,7 @@ import { signInSuccess } from "@/redux/features/authSlice";
 import {
   processingFailure,
   processingStart,
+  processingSuccess,
 } from "@/redux/features/sharedSlice";
 import API from "@/utils/API";
 import { Alert, Button, Label, Spinner, TextInput } from "flowbite-react";
@@ -32,6 +33,7 @@ const Signin = () => {
     await API.post(`/users/signin/`, formData)
       .then((res) => {
         dispatch(signInSuccess(res.data));
+        dispatch(processingSuccess());
         navigate("/");
       })
       .catch((err) => {
