@@ -2,6 +2,7 @@ import OAuth from "@/components/OAuth";
 import {
   processingFailure,
   processingStart,
+  processingSuccess,
 } from "@/redux/features/sharedSlice";
 import API from "@/utils/API";
 import { Alert, Button, Label, Spinner, TextInput } from "flowbite-react";
@@ -34,6 +35,7 @@ const Signup = () => {
     }
     await API.post(`/users/signup/`, formData)
       .then((res) => {
+        dispatch(processingSuccess());
         window.alert("Signed up successfully");
         navigate("/signin");
       })

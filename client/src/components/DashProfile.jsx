@@ -13,6 +13,7 @@ import {
   clearSharedState,
   processingFailure,
   processingStart,
+  processingSuccess,
 } from "@/redux/features/sharedSlice";
 import DeleteModal from "./DeleteModal";
 import { clearReduxPersistedState } from "@/utils/scripts";
@@ -64,6 +65,7 @@ const DashProfile = () => {
     await API.patch(`/users/update/${user._id}/`, data)
       .then((res) => {
         dispatch(updateUserSuccess(res.data));
+        dispatch(processingSuccess());
         setUpdateSuccessMessage("Profile updated successfully");
         setFormData({});
       })

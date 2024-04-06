@@ -1,5 +1,6 @@
 import CallToAction from "@/components/CallToAction";
 import CommentSection from "@/components/CommentSection";
+import PostCard from "@/components/PostCard";
 import {
   processingFailure,
   processingStart,
@@ -16,6 +17,7 @@ const PostDetail = () => {
   const { postSlug } = useParams();
   const dispatch = useDispatch();
   const [postData, setPostData] = useState(null);
+  const [recentPosts, setRecentPosts] = useState([]);
 
   const loading = useSelector((state) => state.shared.loading);
   const error = useSelector((state) => state.shared.error);
@@ -34,6 +36,17 @@ const PostDetail = () => {
     };
     fetchPost();
   }, [postSlug, dispatch]);
+
+  useEffect(() => {
+    const fetchRecentPosts = async () => {
+      await API.get(`/posts/get-posts?limit=3`)
+        .then((res) => {
+          setRecentPosts(res.data.posts);
+        })
+        .catch((err) => {});
+    };
+    fetchRecentPosts();
+  }, []);
 
   if (loading || postData === null) {
     return (
@@ -76,6 +89,15 @@ const PostDetail = () => {
         <CallToAction />
       </div>
       <CommentSection postId={postData?._id} />
+      <div className="flex flex-col justify-center items-center mb-5">
+        <h1 className="text-xl mt-5">Recent Articles</h1>
+        <div className="flex flex-wrap gap-5 mt-5 justify-center">
+          {recentPosts &&
+            recentPosts?.map((postItem) => (
+              <PostCard postItem={postItem} key={postItem._id} />
+            ))}
+        </div>
+      </div>
     </main>
   );
 };
