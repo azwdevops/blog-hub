@@ -19,7 +19,12 @@ module.exports.createPost = async (req, res, next) => {
       .replace(/[^a-zA-Z0-9\s-]/g, "") +
     "-" +
     Math.random().toString(36).slice(-10);
-  const newPost = new Post({ ...req.body, slug, user: req.user.id });
+  const newPost = new Post({
+    ...req.body,
+    slug,
+    user: req.user.id,
+    image: req.file.path,
+  });
   try {
     await newPost.save();
     return res.status(201).json(newPost);
